@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div class="card shadow" style="width: 400px;">
+        <div class="card-body p-5">
+            <h2 class="text-center mb-4">DFTPC System</h2>
+            <h5 class="text-center text-muted mb-4">SASREF Hydrogen Plant</h5>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" required>
+                </div>
+                <div class="alert alert-danger d-none" id="errorMsg"></div>
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username: username, password: password})
+        });
+        const data = await response.json();
+        if (response.ok) {
+            localStorage.setItem('access_token', data.access_token);
+            window.location.href = '/dashboard';
+        } else {
+            document.getElementById('errorMsg').classList.remove('d-none');
+            document.getElementById('errorMsg').textContent = data.detail || "Invalid credentials";
+        }
+    } catch (error) {
+        alert('Login failed: ' + error.message);
+    }
+});
+
+</script>
+{% endblock %}

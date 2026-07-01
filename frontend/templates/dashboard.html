@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">DFTPC</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/daily">Daily Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/monthly">Monthly Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/lab">Lab Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/pap">PAP Events</a>
+                </li>
+            </ul>
+
+            <button class="btn btn-outline-light" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Operational Dashboard</h4>
+        <span id="dashboardSubtitle" class="badge bg-secondary p-2">Loading date...</span>
+    </div>
+    <div class="row">
+        <!-- KPI Gauges -->
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>Plant Load</h6>
+                    <h2 id="plantLoad" class="text-primary">--</h2>
+                    <small>%</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>H2 Purity</h6>
+                    <h2 id="h2Purity" class="text-success">--</h2>
+                    <small>%</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>PSA Recovery</h6>
+                    <h2 id="psaRecovery" class="text-info">--</h2>
+                    <small>%</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h6>Active Alarms</h6>
+                    <h2 id="activeAlarms" class="text-danger">--</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">H2 Production Trend</div>
+                <div class="card-body">
+                    <canvas id="h2TrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Power Consumption</div>
+                <div class="card-body">
+                    <canvas id="powerChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <a href="/daily" class="btn btn-outline-primary w-100">Daily Report</a>
+    </div>
+    <div class="col-md-4">
+        <a href="/monthly" class="btn btn-outline-success w-100">Monthly Report</a>
+    </div>
+    <div class="col-md-4">
+        <a href="/lab" class="btn btn-outline-warning w-100">Lab Analysis</a>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

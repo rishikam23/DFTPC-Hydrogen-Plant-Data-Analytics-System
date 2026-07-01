@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Report - DFTPC System{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">DFTPC</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/daily">Daily Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/monthly">Monthly Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/lab">Lab Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/pap">PAP Events</a>
+                </li>
+            </ul>
+
+            <button class="btn btn-outline-light" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <h4 class="mb-3">Monthly Performance Summary</h4>
+
+    <div class="d-flex gap-3 mb-4 align-items-center">
+        <input type="number" id="month" class="form-control" style="width: 120px;" placeholder="Month" min="1" max="12">
+        <input type="number" id="year" class="form-control" style="width: 120px;" placeholder="Year" min="2020" max="2030">
+        <button class="btn btn-primary" onclick="loadMonthly()">Generate</button>
+        <button class="btn btn-outline-success text-nowrap" onclick="downloadMonthlyCSV()" title="Download as CSV">
+            ⬇ Download CSV
+        </button>
+    </div>
+
+    <div id="monthlyError" class="alert alert-danger d-none"></div>
+    <div id="monthlyLoading" class="text-muted d-none">Loading...</div>
+
+    <table class="table table-bordered">
+        <thead class="table-success">
+            <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+                <th>Unit</th>
+            </tr>
+        </thead>
+        <tbody id="monthlyTable"></tbody>
+    </table>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadMonthly() {
+    const m = document.getElementById("month").value;
+    const y = document.getElementById("year").value;
+    const token = localStorage.getItem("access_token");
+
+    if (!m || !y) {
+        document.getElementById("monthlyError").textContent = "Please enter both month and year.";
+        document.getElementById("monthlyError").classList.remove("d-none");
+        return;
+    }
+    if (!token) {
+        window.location.href = "/";
+        return;
+    }
+
+    document.getElementById("monthlyError").classList.add("d-none");
+    document.getElementById("monthlyLoading").classList.remove("d-none");
+
+    try {
+        const res = await fetch(`/api/reports/monthly?month=${m}&year=${y}`, {
+            headers: { Authorization: "Bearer " + token }
+        });
+
+        document.getElementById("monthlyLoading").classList.add("d-none");
+
+        if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem("access_token");
+            window.location.href = "/";
+            return;
+        }
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: "Unknown error" }));
+            document.getElementById("monthlyError").textContent = "Error: " + (err.detail || res.statusText);
+            document.getElementById("monthlyError").classList.remove("d-none");
+            return;
+        }
+
+        const json = await res.json();
+        const data = json.data;
+
+        const table = document.getElementById("monthlyTable");
+        table.innerHTML = "";
+
+        const fmt = (v, dec=2) => (v != null ? Number(v).toFixed(dec) : "--");
+
+        const rows = [
+            ["Total H2 Production",     fmt(data.total_h2_production_mt),      "MT"],
+            ["Average Plant Load",       fmt(data.average_plant_load_percent),   "%"],
+            ["Total Feedstock Used",     fmt(data.total_feedstock_tday),         "T"],
+            ["Total Power Consumption",  fmt(data.total_power_mwh),              "MWh"],
+            ["Total HP Steam Export",    fmt(data.total_hp_steam_tday),          "T"],
+            ["Total BFW Consumption",    fmt(data.total_bfw_tday),               "T"],
+        ];
+
+        rows.forEach(r => {
+            table.innerHTML += `
+                <tr>
+                    <th>${r[0]}</th>
+                    <td><strong>${r[1]}</strong></td>
+                    <td>${r[2]}</td>
+                </tr>
+            `;
+        });
+
+    } catch (err) {
+        document.getElementById("monthlyLoading").classList.add("d-none");
+        document.getElementById("monthlyError").textContent = "Network error: " + err.message;
+        document.getElementById("monthlyError").classList.remove("d-none");
+        console.error("Monthly report error:", err);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+        window.location.href = "/";
+        return;
+    }
+    try {
+        const dateResponse = await fetch("/api/dashboard/latest-date", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        if (dateResponse.ok) {
+            const dateData = await dateResponse.json();
+            if (dateData.latest_date) {
+                const parts = dateData.latest_date.split("-");
+                if (parts.length === 3) {
+                    document.getElementById("year").value = parseInt(parts[0]);
+                    document.getElementById("month").value = parseInt(parts[1]);
+                    loadMonthly();
+                }
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load default monthly report parameters:", err);
+    }
+});
+
+function downloadMonthlyCSV() {
+    const m = document.getElementById("month").value;
+    const y = document.getElementById("year").value;
+    
+    if (!m || !y) {
+        alert("Please enter both month and year.");
+        return;
+    }
+    
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    fetch(`/api/reports/monthly/export?month=${m}&year=${y}`, {
+        headers: { Authorization: "Bearer " + token }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Failed to download CSV");
+        return res.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const mStr = String(m).padStart(2, '0');
+        a.download = `monthly_report_${y}_${mStr}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(err => {
+        alert("Error downloading CSV: " + err.message);
+    });
+}
+</script>
+{% endblock %}

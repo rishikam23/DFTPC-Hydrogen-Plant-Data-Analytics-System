@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Report - DFTPC System{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">DFTPC</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/daily">Daily Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/monthly">Monthly Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/lab">Lab Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/pap">PAP Events</a>
+                </li>
+            </ul>
+
+            <button class="btn btn-outline-light" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+
+    <h4 class="mb-3">Daily Operations Report</h4>
+
+    <div class="d-flex gap-3 mb-4 align-items-center">
+        <input type="date" id="reportDate" class="form-control w-25">
+        <button class="btn btn-primary" onclick="loadDaily()">Generate</button>
+        <button class="btn btn-outline-success" onclick="downloadDailyCSV()" title="Download as CSV">
+            ⬇ Download CSV
+        </button>
+    </div>
+
+    <div id="dailyError" class="alert alert-danger d-none"></div>
+    <div id="dailyLoading" class="text-muted d-none">Loading...</div>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-primary">
+            <tr>
+                <th>Parameter</th>
+                <th>Value</th>
+                <th>Unit</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="dailyTable"></tbody>
+    </table>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadDaily() {
+    const date = document.getElementById("reportDate").value;
+    const token = localStorage.getItem("access_token");
+
+    if (!date) {
+        document.getElementById("dailyError").textContent = "Please select a date.";
+        document.getElementById("dailyError").classList.remove("d-none");
+        return;
+    }
+    if (!token) {
+        window.location.href = "/";
+        return;
+    }
+
+    document.getElementById("dailyError").classList.add("d-none");
+    document.getElementById("dailyLoading").classList.remove("d-none");
+
+    try {
+        const res = await fetch(`/api/reports/daily?report_date=${date}`, {
+            headers: { Authorization: "Bearer " + token }
+        });
+
+        document.getElementById("dailyLoading").classList.add("d-none");
+
+        if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem("access_token");
+            window.location.href = "/";
+            return;
+        }
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ detail: "Unknown error" }));
+            document.getElementById("dailyError").textContent = "Error: " + (err.detail || res.statusText);
+            document.getElementById("dailyError").classList.remove("d-none");
+            return;
+        }
+
+        const json = await res.json();
+        const d = json.data;
+        const kpi = json.kpi_status || {};
+
+        const table = document.getElementById("dailyTable");
+        table.innerHTML = "";
+
+        const fmt = (v) => (v != null ? v.toFixed(2) : "--");
+
+        const statusBadge = (s) => {
+            if (!s) return "";
+            const cls = s === "GREEN" ? "bg-success" : s === "AMBER" ? "bg-warning text-dark" : "bg-danger";
+            return `<span class="badge ${cls}">${s}</span>`;
+        };
+
+        const rows = [
+            ["Plant Load",          fmt(d.plant_load_percent),         "%",      statusBadge(kpi.plant_load)],
+            ["Operation Hours",     fmt(d.operation_hours),            "hrs",    ""],
+            ["H2 Production",       fmt(d.hmu_h2_outlet_tday),        "T/day",  ""],
+            ["PSA Outlet",          fmt(d.psa_outlet_tday),           "T/day",  ""],
+            ["PSA Recovery",        fmt(d.psa_recovery_percent),      "%",      statusBadge(kpi.psa_recovery)],
+            ["Power Consumption",   fmt(d.total_power_mw),            "MW",     statusBadge(kpi.power_efficiency)],
+            ["Sales Gas to Feed",   fmt(d.sales_gas_to_feed_tday),   "T/day",  ""],
+            ["Sales Gas to Fuel",   fmt(d.sales_gas_to_fuel_tday),   "T/day",  ""],
+            ["Sales Gas Flow",      fmt(d.sales_gas_flow_tday),       "T/day",  ""],
+            ["HP Steam Export",     fmt(d.hp_steam_export_tday),      "T/day",  ""],
+            ["BFW Consumption",     fmt(d.total_bfw_flow_tday),       "T/day",  ""],
+            ["SMR Inlet Temp",      fmt(d.smr_inlet_temp_c),          "°C",     ""],
+            ["SMR Outlet Temp",     fmt(d.smr_outlet_temp_c),         "°C",     ""],
+        ];
+
+        rows.forEach(r => {
+            table.innerHTML += `
+                <tr>
+                    <td>${r[0]}</td>
+                    <td><strong>${r[1]}</strong></td>
+                    <td>${r[2]}</td>
+                    <td>${r[3]}</td>
+                </tr>
+            `;
+        });
+
+    } catch (err) {
+        document.getElementById("dailyLoading").classList.add("d-none");
+        document.getElementById("dailyError").textContent = "Network error: " + err.message;
+        document.getElementById("dailyError").classList.remove("d-none");
+        console.error("Daily report error:", err);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+        window.location.href = "/";
+        return;
+    }
+    try {
+        const dateResponse = await fetch("/api/dashboard/latest-date", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        if (dateResponse.ok) {
+            const dateData = await dateResponse.json();
+            if (dateData.latest_date) {
+                document.getElementById("reportDate").value = dateData.latest_date;
+                loadDaily();
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load default daily report date:", err);
+    }
+});
+
+function downloadDailyCSV() {
+    const dateInput = document.getElementById("reportDate").value;
+    if (!dateInput) {
+        alert("Please select a date first.");
+        return;
+    }
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    fetch(`/api/reports/daily/export?report_date=${dateInput}`, {
+        headers: { Authorization: "Bearer " + token }
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Failed to download CSV");
+        return res.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `daily_report_${dateInput}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    })
+    .catch(err => {
+        alert("Error downloading CSV: " + err.message);
+    });
+}
+</script>
+{% endblock %}

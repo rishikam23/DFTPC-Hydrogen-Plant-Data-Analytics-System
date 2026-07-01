@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Lab Analysis - DFTPC System{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">DFTPC</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link" href="/dashboard">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/daily">Daily Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/monthly">Monthly Report</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="/lab">Lab Analysis</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/pap">PAP Events</a>
+                </li>
+            </ul>
+
+            <button class="btn btn-outline-light" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Entry Form -->
+        <div class="col-md-5">
+            <h5>Submit Lab Analysis</h5>
+            <form id="labForm">
+                <div class="mb-2">
+                    <label for="analysisDate" class="form-label">Analysis Date</label>
+                    <input type="date" class="form-control" id="analysisDate" required>
+                </div>
+                <div class="mb-2">
+                    <label for="sample" class="form-label">Sample Point</label>
+                    <input class="form-control" id="sample" required>
+                </div>
+                <div class="mb-2">
+                    <label for="component" class="form-label">Component</label>
+                    <input class="form-control" id="component" required>
+                </div>
+                <div class="mb-2">
+                    <label for="value" class="form-label">Value (%)</label>
+                    <input type="number" step="any" class="form-control" id="value" required>
+                </div>
+                <div id="labFormError" class="alert alert-danger d-none mt-2"></div>
+                <div id="labFormSuccess" class="alert alert-success d-none mt-2"></div>
+                <button type="submit" class="btn btn-success mt-2">Submit</button>
+            </form>
+        </div>
+
+        <!-- Recent Lab Entries -->
+        <div class="col-md-7">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="mb-0">Recent Lab Entries</h5>
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadLabEntries()">&#8635; Refresh</button>
+            </div>
+            <div id="labError" class="alert alert-danger d-none"></div>
+            <div id="labLoading" class="text-muted d-none">Loading entries...</div>
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-striped">
+                    <thead class="table-warning">
+                        <tr>
+                            <th>Date</th>
+                            <th>Sample Point</th>
+                            <th>Component</th>
+                            <th>Value (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="labTable">
+                        <tr><td colspan="4" class="text-muted text-center">No entries loaded</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function loadLabEntries() {
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "/"; return; }
+
+    document.getElementById("labLoading").classList.remove("d-none");
+    document.getElementById("labError").classList.add("d-none");
+
+    try {
+        const res = await fetch("/api/lab/", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        document.getElementById("labLoading").classList.add("d-none");
+
+        if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem("access_token");
+            window.location.href = "/";
+            return;
+        }
+
+        if (!res.ok) {
+            document.getElementById("labError").textContent = "Failed to load lab entries: " + res.statusText;
+            document.getElementById("labError").classList.remove("d-none");
+            return;
+        }
+
+        const entries = await res.json();
+        const tbody = document.getElementById("labTable");
+
+        if (!entries || entries.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No lab entries found</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = entries.map(e => `
+            <tr>
+                <td>${e.analysis_date ? e.analysis_date.substring(0, 10) : "--"}</td>
+                <td>${e.sample_point || "--"}</td>
+                <td>${e.component || "--"}</td>
+                <td>${e.value_mol_percent != null ? Number(e.value_mol_percent).toFixed(3) : "--"}</td>
+            </tr>
+        `).join("");
+
+    } catch (err) {
+        document.getElementById("labLoading").classList.add("d-none");
+        document.getElementById("labError").textContent = "Network error: " + err.message;
+        document.getElementById("labError").classList.remove("d-none");
+        console.error("Lab entries error:", err);
+    }
+}
+
+document.getElementById("labForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "/"; return; }
+
+    const dateVal = document.getElementById("analysisDate").value;
+    const sampleVal = document.getElementById("sample").value;
+    const componentVal = document.getElementById("component").value;
+    const valueVal = parseFloat(document.getElementById("value").value);
+
+    const errDiv = document.getElementById("labFormError");
+    const okDiv  = document.getElementById("labFormSuccess");
+    errDiv.classList.add("d-none");
+    okDiv.classList.add("d-none");
+
+    if (isNaN(valueVal) || valueVal < 0 || valueVal > 100) {
+        errDiv.textContent = "Value must be a percentage between 0 and 100";
+        errDiv.classList.remove("d-none");
+        return;
+    }
+
+    try {
+        const response = await fetch("/api/lab/", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({
+                analysis_date: new Date(dateVal).toISOString(),
+                sample_point: sampleVal,
+                component: componentVal,
+                value_mol_percent: valueVal
+            })
+        });
+
+        if (response.ok) {
+            okDiv.textContent = "Lab data submitted successfully!";
+            okDiv.classList.remove("d-none");
+            document.getElementById("labForm").reset();
+            await loadDefaultDate();
+            await loadLabEntries();
+        } else {
+            const errData = await response.json().catch(() => ({}));
+            errDiv.textContent = "Error: " + (errData.detail || "Failed to submit lab data");
+            errDiv.classList.remove("d-none");
+        }
+    } catch (err) {
+        errDiv.textContent = "Network error: " + err.message;
+        errDiv.classList.remove("d-none");
+        console.error("Submit lab data error:", err);
+    }
+});
+
+async function loadDefaultDate() {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+    try {
+        const dateResponse = await fetch("/api/dashboard/latest-date", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        if (dateResponse.ok) {
+            const dateData = await dateResponse.json();
+            if (dateData.latest_date) {
+                document.getElementById("analysisDate").value = dateData.latest_date;
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load default lab date:", err);
+    }
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "/"; return; }
+    await loadDefaultDate();
+    await loadLabEntries();
+});
+</script>
+{% endblock %}

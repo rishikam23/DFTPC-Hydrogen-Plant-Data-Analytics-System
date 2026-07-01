@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Daily KPI</title>
+</head>
+<body>
+
+<h2>Daily KPI Report</h2>
+
+<input type="date" id="date" />
+<button onclick="loadKPI()">View KPI</button>
+
+<table border="1" id="kpiTable"></table>
+
+<script>
+async function loadKPI() {
+    const date = document.getElementById("date").value;
+
+    const res = await fetch(
+        `http://127.0.0.1:8000/api/kpi/daily?report_date=${date}`
+    );
+
+    const data = await res.json();
+
+    const table = document.getElementById("kpiTable");
+    table.innerHTML = "";
+
+    for (const key in data) {
+        if (data[key] !== null && key !== "id") {
+            const row = table.insertRow();
+            row.insertCell(0).innerText = key;
+            row.insertCell(1).innerText = data[key];
+        }
+    }
+}
+</script>
+
+</body>
+</html>

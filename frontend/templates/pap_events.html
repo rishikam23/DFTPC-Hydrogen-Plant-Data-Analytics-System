@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}PAP Events - DFTPC System{% endblock %}
+
+{% block content %}
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="/dashboard">DFTPC</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/daily">Daily Report</a></li>
+                <li class="nav-item"><a class="nav-link" href="/monthly">Monthly Report</a></li>
+                <li class="nav-item"><a class="nav-link" href="/lab">Lab Analysis</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/pap">PAP Events</a></li>
+            </ul>
+            <button class="btn btn-outline-light" onclick="logout()">Logout</button>
+        </div>
+    </div>
+</nav>
+
+<div class="container-fluid mt-4">
+    <div class="row">
+
+        <!-- Entry Form -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light border-bottom">
+                    <h4 class="mb-0">Log New PAP Event</h4>
+                </div>
+                <div class="card-body">
+                    <form id="papForm">
+                        <div class="mb-2">
+                            <label class="form-label">Event Type</label>
+                            <select class="form-select" id="eventType" required>
+                                <option value="DSQm">DSQm — Delivery Shortfall</option>
+                                <option value="FEPPm">FEPPm — Feedstock Excess</option>
+                                <option value="PEPPm">PEPPm — Power Excess</option>
+                                <option value="ROGPPm">ROGPPm — ROG Penalty</option>
+                                <option value="PACm">PACm — PAC Event</option>
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Start Time</label>
+                            <input type="datetime-local" class="form-control" id="startTime" required>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">End Time (optional)</label>
+                            <input type="datetime-local" class="form-control" id="endTime">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Trigger Condition</label>
+                            <input type="text" class="form-control" id="triggerCondition">
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col">
+                                <label class="form-label">Actual Value</label>
+                                <input type="number" step="any" class="form-control" id="triggerValue">
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Threshold</label>
+                                <input type="number" step="any" class="form-control" id="thresholdValue">
+                            </div>
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col">
+                                <label class="form-label">Shortfall (MT)</label>
+                                <input type="number" step="any" class="form-control" id="shortfallQty">
+                            </div>
+                            <div class="col">
+                                <label class="form-label">Penalty (INR)</label>
+                                <input type="number" step="any" class="form-control" id="penaltyAmount">
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" id="eventStatus">
+                                <option value="ACTIVE">ACTIVE</option>
+                                <option value="RESOLVED">RESOLVED</option>
+                                <option value="ACKNOWLEDGED">ACKNOWLEDGED</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remarks</label>
+                            <textarea class="form-control" id="remarks" rows="2" placeholder="Optional notes..."></textarea>
+                        </div>
+                        <div id="papFormError" class="alert alert-danger d-none py-2"></div>
+                        <div id="papFormSuccess" class="alert alert-success d-none py-2"></div>
+                        <button type="submit" class="btn btn-primary w-100">Log PAP Event</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Events Table -->
+        <div class="col-md-8">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h4 class="mb-0">PAP Event Log</h4>
+                <div class="d-flex gap-2 align-items-center">
+                    <span id="eventCount" class="badge bg-secondary">Loading...</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="loadPAPEvents()">&#8635; Refresh</button>
+                </div>
+            </div>
+            <div id="papError" class="alert alert-warning d-none"></div>
+            <div id="papLoading" class="text-muted d-none">Loading events...</div>
+
+            <!-- PAP Thresholds Reference Card -->
+            <div class="card shadow-sm mb-3 mt-2">
+                <div class="card-header bg-light border-bottom text-secondary py-2">
+                    <h6 class="mb-0 small fw-bold">📋 PAP Thresholds Reference</h6>
+                </div>
+                <div class="card-body p-2">
+                    <div class="d-flex justify-content-between small flex-wrap gap-3 px-2">
+                        <div><strong>DSQm:</strong> H2 delivery &lt; 8.5 MT/hr for &gt;15 min</div>
+                        <div><strong>DSQm Pressure:</strong> Delivery pressure &lt; 22.5 barg</div>
+                        <div><strong>FEPPm:</strong> Feedstock &gt; 715.8 T/day + 2.5%</div>
+                        <div><strong>PEPPm:</strong> Power &gt; 0.53 MWh/MT H2 + 5%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Type</th>
+                            <th>Start Time</th>
+                            <th>Duration</th>
+                            <th>Trigger</th>
+                            <th>Shortfall</th>
+                            <th>Penalty (INR)</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="papTable">
+                        <tr><td colspan="9" class="text-center text-muted">No events logged yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="row mt-3 g-3" id="papSummary" style="display:none!important">
+                <div class="col-md-3">
+                    <div class="card text-center border-danger">
+                        <div class="card-body py-2">
+                            <div class="text-danger fw-bold fs-4" id="totalEvents">0</div>
+                            <small class="text-muted">Total Events</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-warning">
+                        <div class="card-body py-2">
+                            <div class="text-warning fw-bold fs-4" id="activeEvents">0</div>
+                            <small class="text-muted">Active</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-success">
+                        <div class="card-body py-2">
+                            <div class="text-success fw-bold fs-4" id="resolvedEvents">0</div>
+                            <small class="text-muted">Resolved</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center border-dark">
+                        <div class="card-body py-2">
+                            <div class="fw-bold fs-5" id="totalPenalty">₹0</div>
+                            <small class="text-muted">Total Penalty</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const EVENT_TYPE_LABELS = {
+    DSQm: "Delivery Shortfall",
+    FEPPm: "Feedstock Excess",
+    PEPPm: "Power Excess",
+    ROGPPm: "ROG Penalty",
+    PACm: "PAC Event"
+};
+
+async function loadPAPEvents() {
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "/"; return; }
+
+    document.getElementById("papLoading").classList.remove("d-none");
+    document.getElementById("papError").classList.add("d-none");
+
+    try {
+        const res = await fetch("/api/reports/pap-events", {
+            headers: { Authorization: "Bearer " + token }
+        });
+
+        document.getElementById("papLoading").classList.add("d-none");
+
+        if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem("access_token");
+            window.location.href = "/";
+            return;
+        }
+
+        if (!res.ok) {
+            document.getElementById("papError").textContent = "Failed to load events: " + res.statusText;
+            document.getElementById("papError").classList.remove("d-none");
+            return;
+        }
+
+        const events = await res.json();
+        renderPAPTable(events);
+    } catch (err) {
+        document.getElementById("papLoading").classList.add("d-none");
+        document.getElementById("papError").textContent = "Network error: " + err.message;
+        document.getElementById("papError").classList.remove("d-none");
+    }
+}
+
+function renderPAPTable(events) {
+    const tbody = document.getElementById("papTable");
+    const countEl = document.getElementById("eventCount");
+
+    countEl.textContent = events.length + " events";
+
+    if (events.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">No PAP events logged yet. Use the form to record events.</td></tr>';
+        document.getElementById("papSummary").style.display = "none";
+        return;
+    }
+
+    // Show summary
+    const active = events.filter(e => e.status === "ACTIVE").length;
+    const resolved = events.filter(e => e.status === "RESOLVED").length;
+    const totalPenalty = events.reduce((s, e) => s + (e.penalty_amount || 0), 0);
+
+    document.getElementById("totalEvents").textContent = events.length;
+    document.getElementById("activeEvents").textContent = active;
+    document.getElementById("resolvedEvents").textContent = resolved;
+    document.getElementById("totalPenalty").textContent = "₹" + totalPenalty.toLocaleString("en-IN", {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    document.getElementById("papSummary").style.removeProperty("display");
+
+    tbody.innerHTML = events.map(e => {
+        const statusCls = e.status === "ACTIVE" ? "bg-danger" : e.status === "RESOLVED" ? "bg-success" : "bg-warning text-dark";
+        const typeCls = e.event_type === "DSQm" ? "table-danger" : e.event_type === "FEPPm" ? "table-warning" : e.event_type === "PEPPm" ? "table-info" : "";
+        const startFmt = e.start_time ? e.start_time.substring(0, 16).replace("T", " ") : "--";
+        const dur = e.duration_minutes != null ? e.duration_minutes + " min" : "--";
+        const shortfall = e.shortfall_quantity != null ? e.shortfall_quantity.toFixed(2) + " MT" : "--";
+        const penalty = e.penalty_amount != null ? "₹" + e.penalty_amount.toLocaleString("en-IN") : "--";
+        const trigger = e.trigger_condition ? e.trigger_condition.substring(0, 30) + (e.trigger_condition.length > 30 ? "…" : "") : "--";
+
+        return `<tr class="${typeCls}">
+            <td>${e.id}</td>
+            <td><span class="badge bg-dark">${e.event_type}</span><br><small class="text-muted">${EVENT_TYPE_LABELS[e.event_type] || ""}</small></td>
+            <td><small>${startFmt}</small></td>
+            <td>${dur}</td>
+            <td><small title="${e.trigger_condition || ""}">${trigger}</small></td>
+            <td>${shortfall}</td>
+            <td class="fw-bold">${penalty}</td>
+            <td><span class="badge ${statusCls}">${e.status}</span></td>
+            <td>
+                ${e.status === "ACTIVE" ? `<button class="btn btn-xs btn-sm btn-outline-success py-0 px-1" onclick="resolveEvent(${e.id})">Resolve</button>` : ""}
+            </td>
+        </tr>`;
+    }).join("");
+}
+
+async function resolveEvent(eventId) {
+    const token = localStorage.getItem("access_token");
+    if (!token) return;
+
+    try {
+        const res = await fetch(`/api/reports/pap-events/${eventId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({ status: "RESOLVED" })
+        });
+        if (res.ok) {
+            await loadPAPEvents();
+        } else {
+            alert("Failed to update status");
+        }
+    } catch (err) {
+        alert("Network error: " + err.message);
+    }
+}
+
+document.getElementById("papForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "/"; return; }
+
+    const errDiv = document.getElementById("papFormError");
+    const okDiv  = document.getElementById("papFormSuccess");
+    errDiv.classList.add("d-none");
+    okDiv.classList.add("d-none");
+
+    const startVal = document.getElementById("startTime").value;
+    const endVal   = document.getElementById("endTime").value;
+
+    if (!startVal) {
+        errDiv.textContent = "Start time is required";
+        errDiv.classList.remove("d-none");
+        return;
+    }
+
+    const payload = {
+        event_type: document.getElementById("eventType").value,
+        start_time: new Date(startVal).toISOString(),
+        end_time: endVal ? new Date(endVal).toISOString() : null,
+        trigger_condition: document.getElementById("triggerCondition").value,
+        trigger_value: document.getElementById("triggerValue").value || 0,
+        threshold_value: document.getElementById("thresholdValue").value || 0,
+        shortfall_quantity: document.getElementById("shortfallQty").value || 0,
+        penalty_amount: document.getElementById("penaltyAmount").value || 0,
+        status: document.getElementById("eventStatus").value,
+        remarks: document.getElementById("remarks").value,
+    };
+
+    try {
+        const res = await fetch("/api/reports/pap-events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            const result = await res.json();
+            okDiv.textContent = `PAP event #${result.id} (${result.event_type}) logged successfully!`;
+            okDiv.classList.remove("d-none");
+            document.getElementById("papForm").reset();
+            await loadPAPEvents();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            errDiv.textContent = "Error: " + (err.detail || res.statusText);
+            errDiv.classList.remove("d-none");
+        }
+    } catch (err) {
+        errDiv.textContent = "Network error: " + err.message;
+        errDiv.classList.remove("d-none");
+    }
+});
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "/"; return; }
+
+    // Set default start time to now
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById("startTime").value = now.toISOString().slice(0, 16);
+
+    await loadPAPEvents();
+});
+</script>
+{% endblock %}

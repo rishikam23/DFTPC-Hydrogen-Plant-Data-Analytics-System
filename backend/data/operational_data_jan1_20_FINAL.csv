@@ -1,0 +1,88 @@
+Tag,,,,,,,,,,,,,,,,
+60FQI001,,,,,,,,,,,,,,,,
+60FQI005,,,,,,,,,,,,,,,,
+60FQI009,,,,,,,,,,,,,,,,
+60FQI049,,,,61QIA011TX,,,,,,,,,,,,AVERAGING_TAGS = [
+60FQI053,,,,61QIA012TX,,,,,,,,,,,,"    ('927QR119', 'avg_hhv'),"
+avg_hhv,927QR119,,,61QIA013TX,,,,,,,,,,,,"    ('30PR026AI', 'avg_hmu_h2_outlet_pressure'),"
+60FQI038,,,,61QIA010AI,,,,,,,,,,,,"    ('30TI-316', 'avg_hmu_h2_outlet_temprature'),"
+60FQI045,,,,60QR111,,,,,,,,,,,,"    ('61TIA006', 'avg_61TIA006'),"
+60FQI046,,,,927QR111,,,,,,,,,,,,"    ('61PICA005-AI', 'avg_61PICA005_AI'),"
+30FQI026,,,,927QR112,,,,,,,,,,,,"    ('170PEA329', 'avg_residue_gas_pressure'),"
+avg_hmu_h2_outlet_pressure,30PR026AI,,,927QR113,,,,,,,,,,,,"    ('170PEA469', 'avg_mbu_feed_pressure'),"
+avg_hmu_h2_outlet_temprature,30TI-316,,,927QR114,,,60FQI001,,61QIA011TX,,,,,,,"    ('60TR027', 'avg_smr_inlet_temperature'),"
+60FQI050,,,,927QR115,,,60FQI005,,61QIA012TX,,,,,,,"    ('60TR028-AI', 'avg_smr_outlet_temperature'),"
+61FQI008,,,,927QR116,,,60FQI009,,61QIA013TX,,,,,,,"    ('60TR035AI', 'avg_hts_inlet_temperature'),"
+170FQQI220,,,,927QR117,,,60FQI049,,61QIA010AI,,,,,,,"    ('60TR036', 'avg_60tr036'),"
+170FQI101,,,,927QR118,,,60FQI053,,60QR111,,,,,,,"    ('60TR038-AI', 'avg_60tr038_ai'),"
+170FQI121,,,,60FQI001,,,60FQI038,,927QR111,,,,,,,"    ('60TR040', 'avg_60tr040'),"
+30FQI026,,,,60FQI005,,,60FQI045,,927QR112,,,,,,,"    ('60TR048-AI', 'avg_methanator_inlet_temperature'),"
+avg_hmu_h2_outlet_pressure,,,,60FQI009,,,60FQI046,,927QR113,,,,,,,"    ('60PR054', 'avg_60PR054'),"
+avg_hmu_h2_outlet_temprature,,,,60FQI049,,,60FQI050,,927QR114,,,,,,,"    ('60TI-261', 'avg_methanator_outlet_temperature'),"
+avg_psa_outlet,,,,60FQI053,,,61FQI008,,927QR115,,,,,,,"    ('61TIA045', 'avg_tail_gas_temperature'),"
+avg_61TIA006,61TIA006,,,927QR119,,,170FQQI220,,927QR116,,,,,,,"    ('61PICA065-AI', 'avg_tail_gas_pressure'),"
+avg_61PICA005_AI,61PICA005-AI,,,60FQI038,,,170FQI101,,927QR117,,,,,,,"    ('170TIA440', 'avg_fresh_gas_temperature'),"
+61FQI001,,,,60FQI045,,,170FQI121,,927QR118,,,,,,,"    ('170PICA403-AI', 'avg_fresh_gas_pressure'),"
+170FQI001,,,,60FQI046,,,30FQI026,,927QR119,,,,,,,"    ('170TIA431', 'avg_residue_gas_temperature'),"
+170FQI133,,,,60FQI050,,,61FQI902,,30PR026AI,,,,,,,"    ('170PIC329', 'avg_residue_gas_pressure'),"
+avg_total_feed_to_mbu,,,,61FQI008,,,61FQI001,,30TI-316,,,,,,,"    ('60PIC479-AI', 'avg_outlet_pressure'),"
+avg_residue_gas_flow_from_mbu,,,,170FQQI220,,,170FQI001,,61TIA006,,,,,,,"    ('60PR024-AI', 'avg_60PR024_AI'),"
+avg_170x125,,,,170FQI101,,,170FQI133,,61PICA005-AI,,,,,,,"    ('60TR025-AI', 'avg_60TR025_AI'),"
+avg_average_residue_gas_flow_from_mbu,,,,170FQI121,,,170FQI174,,170PEA329,,,,,,,"    ('60H-046.MV', 'avg_hp_steam_imports_to_plant_vlv_op'),"
+avg_residue_gas_pressure,170PEA329,,,30FQI026,,,170X124,,170PEA469,,,,,,,"    ('900FRS005.PV', 'avg_steam_to_blk_2b'),"
+avg_mbu_feed_pressure,170PEA469,,,30PR026AI,,,170X125,,60TR035AI,,,,,,,"    ('60TR059.MV', 'avg_hbfw_to_j6005_valve_opening'),"
+60FQI006,,,,30TI-316,,,170FQI175,,60TR036,,,,,,,"    ('60TR018.MV', 'avg_hbfw_to_j6004_valve_opening'),"
+170FQISTR2CMAS,,,,61FQI902,,,60FQI006,,60TR038-AI,,,,,,,"    ('927QR111', 'avg_sales_gas_analysis_n2'),"
+avg_smr_inlet_temperature,60TR027,,,61TIA006,,,170FQISTR2CMAS,,60TR040,,,,,,,"    ('927QR112', 'avg_sales_gas_analysis_c1'),"
+avg_smr_outlet_temperature,60TR028-AI,,,61PICA005-AI,,,60TR027,,60TR048-AI,,,,,,,"    ('927QR113', 'avg_sales_gas_analysis_co2'),"
+60FQI054,,,,61FQI001,,,60TR028-AI,,60TI-261,,,,,,,"    ('927QR114', 'avg_sales_gas_analysis_c2'),"
+avg_hts_inlet_temperature,60TR035AI,,,170FQI001,,,60FQI054,,61TIA045,,,,,,,"    ('927QR115', 'avg_sales_gas_analysis_c3'),"
+avg_60tr036,60TR036,,,170FQI133,,,60FQI422,,61PICA065-AI,,,,,,,"    ('927QR116', 'avg_sales_gas_analysis_ic4'),"
+avg_60tr038_ai,60TR038-AI,,,170FQI174,,,60FQQI448,,170TIA440,,,,,,,"    ('927QR117', 'avg_sales_gas_analysis_nc4'),"
+avg_60tr040,60TR040,,,170X124,,,60FQQI451,,170PICA403-AI,,,,,,,"    ('927QR118', 'avg_sales_gas_analysis_c5'),"
+avg_methanator_inlet_temperature,60TR048-AI,,,170X125,,,60FQI020,,170TIA431,,,,,,,"    ('60QR111', 'avg_reformer_outlet_analysis_ch4'),"
+avg_methanator_outlet_temperature,60TI-261,,,170FQI175,,,60FQI011,,170PIC329,,,,,,,"    ('61QIA011TX', 'avg_n2_analyzer'),"
+avg_tail_gas_temperature,61TIA045,,,170PEA329,,,60FQI022,,60PIC479-AI,,,,,,,"    ('61QIA012TX', 'avg_co_analyzer'),"
+avg_tail_gas_pressure,61PICA065-AI,,,170PEA469,,,900FRS005.PV,,60PR024-AI,,,,,,,"    ('61QIA013TX', 'avg_ch4_analyzer'),"
+avg_fresh_gas_temperature,170TIA440,,,60FQI006,,,60FQI075,,60TR025-AI,,,,,,,"    ('61QIA010AI', 'avg_h2_analyzer'),"
+avg_fresh_gas_pressure,170PICA403-AI,,,170FQISTR2CMAS,,,60FQI051,,60H-046.MV,,,,,,,]
+avg_residue_gas_temperature,170TIA431,,,60TR027,,,60FQI021,,60TR059.MV,,,,,,,
+avg_residue_gas_pressure,170PIC329,,,60TR028-AI,,,60FQI017,,60TR018.MV,,,,,,,
+60FQI422,,,,60FQI054,,,60FQI018,,,,,,,,,
+60FQQI448,,,,60TR035AI,,,60FQI019,,,,,,,,,
+60FQQI451,,,,60TR036,,,60FQI074,,,,,,,,,
+avg_outlet_pressure,60PIC479-AI,,,60TR038-AI,,,61FQI005,,,,,,,,,
+60FQI020,,,,60TR040,,,,,,,,,,,,
+avg_60PR024_AI,60PR024-AI,,,60TR048-AI,,,,,,,,,,,,
+avg_60TR025_AI,60TR025-AI,,,60TI-261,,,,,,,,,,,,
+60FQI011,,,,61TIA045,,,,,,,,,,,,
+60FQI022,,,,61PICA065-AI,,,,,,,,,,,,
+avg_hp_steam_imports_to_plant_vlv_op,60H-046.MV,,,170TIA440,,,,,,,,,,,,
+60FQI075,,,,170PICA403-AI,,,,,,,,,,,,
+60FQI051,,,,170TIA431,,,,,,,,,,,,
+60FQI021,,,,170PIC329,,,,,,,,,,,,
+60FQI017,,,,60FQI422,,,,,,,,,,,,
+60FQI018,,,,60FQQI448,,,,,,,,,,,,
+60FQI019,,,,60FQQI451,,,,,,,,,,,,
+avg_hbfw_to_j6005_valve_opening,60TR059.MV,,,60PIC479-AI,,,,,,,,,,,,
+avg_hbfw_to_j6004_valve_opening,60TR018.MV,,,60FQI020,,,,,,,,,,,,
+60FQI074,,,,60PR024-AI,,,,,,,,,,,,
+61FQI005,,,,60TR025-AI,,,,,,,,,,,,
+avg_sales_gas_analysis_n2,,,,60FQI011,,,,,,,,,,,,
+avg_sales_gas_analysis_c1,,,,60FQI022,,,,,,,,,,,,
+avg_sales_gas_analysis_co2,,,,60H-046.MV,,,,,,,,,,,,
+avg_sales_gas_analysis_c2,,,,900FRS005.PV,,,,,,,,,,,,
+avg_sales_gas_analysis_c3,,,,60FQI075,,,,,,,,,,,,
+avg_sales_gas_analysis_ic4,,,,60FQI051,,,,,,,,,,,,
+avg_sales_gas_analysis_nc4,,,,60FQI021,,,,,,,,,,,,
+avg_sales_gas_analysis_c5,,,,60FQI017,,,,,,,,,,,,
+avg_reformer_outlet_analysis_ch4,,,,60FQI018,,,,,,,,,,,,
+avg_n2_analyzer,,,,60FQI019,,,,,,,,,,,,
+avg_co_analyzer,,,,60TR059.MV,,,,,,,,,,,,
+avg_ch4_analyzer,,,,60TR018.MV,,,,,,,,,,,,
+avg_h2_analyzer,,,,60FQI074,,,,,,,,,,,,
+170FQI174,,,,61FQI005,,,,,,,,,,,,
+170X124,,,,,,,,,,,,,,,,
+170X125,,,,,,,,,,,,,,,,
+170FQI175,,,,,,,,,,,,,,,,
+61FQI902,,,,,,,,,,,,,,,,
