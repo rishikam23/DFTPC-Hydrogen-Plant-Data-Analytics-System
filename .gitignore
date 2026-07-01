@@ -1,1 +1,4 @@
 /backend/.env
+/backend/data/analysis_data_jan1_20_FINAL.csv
+/backend/data/operational_data_jan1_20_FINAL.csv
+/backend/data/SASREF Data October - 2025 V2.0.xlsx
