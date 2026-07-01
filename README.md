@@ -29,57 +29,6 @@ Third-Party DB → Data Loader → PostgreSQL → Calculation Engine → Reports
                               Dashboard API ← Frontend
 ```
 
-### Calculation Implementations
-
-#### 1. Plant Load
-```python
-Plant Load (%) = (Actual H2 Production / 10.33 MT/hr) × 100
-```
-- **Source**: HMU H2 outlet flow (tag: 30FQI026)
-- **Update Frequency**: Real-time (1-min avg)
-
-#### 2. Energy Rate
-```python
-Sales Gas Energy (MMBTU/Day) = Flow (T/Day) × HHV (BTU/nm³) × 0.001
-```
-- **Tags**: 60FQI001 (flow), 927QR119 (HHV)
-- **Used for**: Feedstock efficiency calculation
-
-#### 3. Pure H2 Product (NOHm)
-```python
-NOHm = HPSA Output + MBU Output - Recycle + Imports - Exports
-```
-- **Components**:
-  - HPSA: 61FQI902 (purity ≥99.9%)
-  - MBU: 170FQI175 (residue gas recovery)
-  - Recycle: 60FQI006
-  - Import: 170FQQI220
-
-#### 4. PAP Event Detection
-
-**DSQm (Shortfall Event)**
-```python
-if (H2_pressure < 22.5 barg) AND (available_h2 < required_h2):
-    if duration >= 15 minutes:
-        penalty = shortfall_quantity × deduction_factor
-```
-- **Tags**: 30PR026 (pressure), 30FQI026 (flow)
-- **Evaluation**: 1-min intervals, 15-min moving average
-
-**FEPPm (Feedstock Efficiency)**
-```python
-if (actual_feedstock / target_feedstock - 1) > 2.5%:
-    penalty = excess_consumption × rate
-```
-- **Tag**: 60FQI001 (sales gas flow)
-- **Evaluation**: Monthly aggregate
-
-**PEPPm (Power Efficiency)**
-```python
-target_power = 0.53 MWh/MT × net_h2_output
-if actual_power > target_power × 1.05:
-    penalty = (actual - target) × rate
-```
 - **Calculation**: Total power consumption vs. target
 - **Allowable**: ±5% band
 
@@ -186,39 +135,6 @@ pytest tests/test_api.py -v
 # Coverage
 pytest --cov=app --cov-report=html
 ```
-
-## Deployment
-
-### Production Checklist
-- [ ] Set strong SECRET_KEY in .env
-- [ ] Configure SMTP for email reports
-- [ ] Set up SSL certificates
-- [ ] Configure firewall (port 8000)
-- [ ] Enable database backups (daily)
-- [ ] Set up monitoring (Grafana/Prometheus)
-
-### Scaling
-- Horizontal: Multiple Gunicorn workers
-- Vertical: Increase PostgreSQL resources
-- Caching: Redis cluster for high availability
-
-## Troubleshooting
-
-**Issue**: Dashboard not loading
-- Check Redis: `redis-cli ping`
-- Check logs: `docker-compose logs web`
-
-**Issue**: PAP events not detecting
-- Verify Celery worker: `celery -A scripts.celery_tasks inspect active`
-- Check data quality in `process_data` table
-
-**Issue**: Report generation slow
-- Refresh materialized views: `REFRESH MATERIALIZED VIEW mv_daily_kpis`
-- Check PostgreSQL performance: `EXPLAIN ANALYZE` on slow queries
-
-## Support
-
-For issues, contact: dftpc-support@example.com
 
 ## License
 Internal use only - SASREF Hydrogen Plant
